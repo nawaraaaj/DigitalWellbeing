@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DigitalWellbeing.Models
 {
-    internal class DailySummary
+    public class DailySummary
     {
+        public int Id { get; set; }
+        public DateTime UsageDate { get; set; }
+        public string AppUsageBreakdown { get; set; }
+        public int TotalTimeSeconds { get; set; }
     }
 }
