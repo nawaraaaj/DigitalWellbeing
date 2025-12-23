@@ -24,11 +24,13 @@ namespace DigitalWellbeing.Services
             using var connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
             connection.Open();
 
-            string insertSql = @"INSERT INTO AppUsate (AppName,UsageDate, TImeUsed) Values (@appName, @date, @timeUsed);";
+            string insertSql = @"INSERT INTO AppUsage (AppName,UsageDate, TImeUsed) Values (@appName, @date, @timeUsed);";
             using var cmd = new SQLiteCommand(insertSql, connection);
             cmd.Parameters.AddWithValue("@appName", appName);
             cmd.Parameters.AddWithValue("@date", DateTime.Today.ToString("yyyy-MM-dd"));
             cmd.Parameters.AddWithValue("@timeUsed", timeUsedSeconds);
+
+            cmd.ExecuteNonQuery();
 
             _dailySummaryService.GenerateOrUpdateDailySummary(DateTime.Today);
         }
@@ -37,7 +39,7 @@ namespace DigitalWellbeing.Services
         public List<AppUsage> GetTodayUsage()
         {
             var list = new List<AppUsage>();
-            using var connection = new SQLiteConnection($"Date Source={_dbPath};Version=3;");
+            using var connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
             connection.Open();
 
             string sql = @"SELECT id, AppName,UsageDate, TimeUsedSeconds FROM AppUsage WHERE UsageDate = @today;";
