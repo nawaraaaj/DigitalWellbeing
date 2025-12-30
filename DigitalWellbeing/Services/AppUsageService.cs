@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using DigitalWellbeing.Models;
 using DigitalWellbeing.Data;
 using System.Xml;
@@ -21,11 +21,11 @@ namespace DigitalWellbeing.Services
         //new app usage record
         public void AddAppUsage ( string appName, int timeUsedSeconds)
         {
-            using var connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+            using var connection = new SqliteConnection($"Data Source={_dbPath};Version=3;");
             connection.Open();
 
-            string insertSql = @"INSERT INTO AppUsage (AppName,UsageDate, TImeUsed) Values (@appName, @date, @timeUsed);";
-            using var cmd = new SQLiteCommand(insertSql, connection);
+            string insertSql = @"INSERT INTO AppUsage (AppName,UsageDate, TimeUsedSeconds) Values (@appName, @date, @timeUsed);";
+            using var cmd = new SqliteCommand(insertSql, connection);
             cmd.Parameters.AddWithValue("@appName", appName);
             cmd.Parameters.AddWithValue("@date", DateTime.Today.ToString("yyyy-MM-dd"));
             cmd.Parameters.AddWithValue("@timeUsed", timeUsedSeconds);
@@ -39,11 +39,11 @@ namespace DigitalWellbeing.Services
         public List<AppUsage> GetTodayUsage()
         {
             var list = new List<AppUsage>();
-            using var connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+            using var connection = new SqliteConnection($"Data Source={_dbPath};Version=3;");
             connection.Open();
 
             string sql = @"SELECT id, AppName,UsageDate, TimeUsedSeconds FROM AppUsage WHERE UsageDate = @today;";
-            using var cmd = new SQLiteCommand(sql, connection);
+            using var cmd = new SqliteCommand(sql, connection);
             cmd.Parameters.AddWithValue("@today", DateTime.Today.ToString("yyyy-MM-dd"));
 
             using var reader = cmd.ExecuteReader();

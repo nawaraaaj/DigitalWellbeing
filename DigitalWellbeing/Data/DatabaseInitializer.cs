@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 using System.IO;
 
 namespace DigitalWellbeing.Data
@@ -17,18 +17,13 @@ namespace DigitalWellbeing.Data
         {
             var dbPath = GetDatabasePath();
 
-            if (!File.Exists(dbPath))
-            {
-                SQLiteConnection.CreateFile(dbPath);
-            }
-
-            using var connection = new SQLiteConnection($"Data Source={dbPath};Version=3;");
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
 
             CreateTables(connection);
         }
 
-        private static void CreateTables(SQLiteConnection connection)
+        private static void CreateTables(SqliteConnection connection)
         {
             var createAppUsageTable = @"
                 CREATE TABLE IF NOT EXISTS AppUsage (
@@ -45,7 +40,8 @@ namespace DigitalWellbeing.Data
                     TotalTimeSeconds INTEGER NOT NULL
                 );";
 
-            using var cmd = new SQLiteCommand(connection);
+            using var cmd = connection.CreateCommand();
+
             cmd.CommandText = createAppUsageTable;
             cmd.ExecuteNonQuery();
 

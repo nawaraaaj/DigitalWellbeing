@@ -1,0 +1,59 @@
+﻿<UserControl x:Class="DigitalWellbeing.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="Digital Wellbeing"
+                       FontSize="26"
+                       FontWeight="Bold"/>
+            <TextBlock Text="{Binding TodayDate}"
+                       FontSize="14"
+                       Foreground="Gray"/>
+        </StackPanel>
+
+        <!-- Total Screen Time -->
+        <Border Grid.Row="1"
+                Background="#F3F3F3"
+                CornerRadius="8"
+                Padding="20"
+                Margin="0,0,0,20">
+            <StackPanel>
+                <TextBlock Text="Total Time Today"
+                           FontSize="16"
+                           Foreground="Gray"/>
+                <TextBlock Text="{Binding TotalTimeToday}"
+                           FontSize="32"
+                           FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- App Usage List -->
+        <GroupBox Grid.Row="2" Header="App Usage Today">
+            <ListView ItemsSource="{Binding TodayAppUsages}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Application"
+                                        Width="200"
+                                        DisplayMemberBinding="{Binding AppName}"/>
+
+                        <GridViewColumn Header="Time Used (seconds)"
+                                        Width="150"
+                                        DisplayMemberBinding="{Binding TimeUsedSeconds}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </GroupBox>
+
+    </Grid>
+</UserControl>

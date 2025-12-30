@@ -2,7 +2,8 @@
 using DigitalWellbeing.Models;
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using System.IO;
+using Microsoft.Data.Sqlite;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Text.Json;
@@ -36,11 +37,11 @@ namespace DigitalWellbeing.Services
 
             int totalTime = appUsageDict.Values.Sum();
             string jsonBreakdown = JsonSerializer.Serialize(appUsageDict);
-            using var connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+            using var connection = new SqliteConnection($"Data Source={_dbPath};Version=3;");
             connection.Open();
 
             string checkSql = "SELECT Id FROM DailySummary WHERE UsageDate = @date;";
-            using var checkCmd = new SQLiteCommand(checkSql, connection);
+            using var checkCmd = new SqliteCommand(checkSql, connection);
             checkCmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
             object result = checkCmd.ExecuteScalar();
 
@@ -56,7 +57,7 @@ namespace DigitalWellbeing.Services
                 int id = Convert.ToInt32(result);
                 string updateSql = @"UPDATE DailySummary SET TotalTimeSeconds = @total, AppUsageBreakDown = @breakdown WHERE ID = @id;";
 
-                using var updateCmd = new SQLiteCommand(updateSql, connection);
+                using var updateCmd = new SqliteCommand(updateSql, connection);
                 updateCmd.Parameters.AddWithValue("@total", totalTime);
                 updateCmd.Parameters.AddWithValue("@breakdown", jsonBreakdown);
                 updateCmd.Parameters.AddWithValue("id", id);
@@ -66,7 +67,7 @@ namespace DigitalWellbeing.Services
             {
                 string insertSql = @"INSERT INTO DailySummary (UsageDate, TotalTimeSeconds, AppUsageBreakdown)
                                      VALUES (@date, @total, @breakdown);";
-                using var insertCmd = new SQLiteCommand(insertSql, connection);
+                using var insertCmd = new SqliteCommand(insertSql, connection);
                 insertCmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
                 insertCmd.Parameters.AddWithValue("@total", totalTime);
                 insertCmd.Parameters.AddWithValue("@breakdown", jsonBreakdown);
@@ -80,11 +81,11 @@ namespace DigitalWellbeing.Services
         private List<AppUsage> GetAppUsagesForDate(DateTime date)
         {
             var list = new List<AppUsage>();
-            using var connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+            using var connection = new SqliteConnection($"Data Source={_dbPath};Version=3;");
             connection.Open();
 
             string sql = @"SELECT Id, AppName, UsageDate, TimeUsedSeconds FROM AppUsage WHERE UsageDate = @date;";
-            using var cmd = new SQLiteCommand(sql, connection);
+            using var cmd = new SqliteCommand(sql, connection);
             cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
 
             using var reader = cmd.ExecuteReader();

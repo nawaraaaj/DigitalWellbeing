@@ -6,12 +6,18 @@ using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using DigitalWellbeing.Models;
 using DigitalWellbeing.Services;
+using System.Windows.Threading;
+using System.Security.Principal;
 
 namespace DigitalWellbeing.ViewModels
 {
     public class DashboardViewModel: BaseViewModel
     {
         private readonly AppUsageService _appUsageService;
+        private readonly DispatcherTimer _refreshTimer;
+
+        public string TodayDate => DateTime.Today.ToString("dddd, dd MMM yyyy");
+
 
         private int _totalScreenTimeSeconds;
         private int TotalScreenTimeSeconds
@@ -19,6 +25,16 @@ namespace DigitalWellbeing.ViewModels
             get => _totalScreenTimeSeconds;
             set => SetProperty(ref _totalScreenTimeSeconds, value);
         }
+
+        public string TotalTimeToday
+        {
+            get
+            {
+                var ts = TimeSpan.FromSeconds(_totalScreenTimeSeconds);
+                return $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}"; 
+            }
+        }
+
 
         private ObservableCollection<AppUsage> _todayAppUsages = new ObservableCollection<AppUsage>();
         public ObservableCollection<AppUsage> TodayAppUsages
@@ -33,6 +49,11 @@ namespace DigitalWellbeing.ViewModels
             TodayAppUsages = new ObservableCollection<AppUsage>();
 
             LoadTodayUsage();
+
+            _refreshTimer = new DispatcherTimer();
+            _refreshTimer.Interval = TimeSpan.FromSeconds(5);
+            _refreshTimer.Tick += (s, e) => LoadTodayUsage();
+            _refreshTimer.Start();
         }
 
         public void LoadTodayUsage()
@@ -48,7 +69,8 @@ namespace DigitalWellbeing.ViewModels
                 total += usage.TimeUsedSeconds;
             }
 
-            TotalScreenTimeSeconds = total;
+            _totalScreenTimeSeconds = total;
+            OnPropertyChanged(nameof(TotalTimeToday));
         }
     }
 }
