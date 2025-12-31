@@ -4,7 +4,6 @@ using Microsoft.Data.Sqlite;
 using DigitalWellbeing.Models;
 using DigitalWellbeing.Data;
 using System.Xml;
-
 namespace DigitalWellbeing.Services
 {
     public class AppUsageService
@@ -21,7 +20,7 @@ namespace DigitalWellbeing.Services
         //new app usage record
         public void AddAppUsage ( string appName, int timeUsedSeconds)
         {
-            using var connection = new SqliteConnection($"Data Source={_dbPath};Version=3;");
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
             string insertSql = @"INSERT INTO AppUsage (AppName,UsageDate, TimeUsedSeconds) Values (@appName, @date, @timeUsed);";
@@ -39,7 +38,7 @@ namespace DigitalWellbeing.Services
         public List<AppUsage> GetTodayUsage()
         {
             var list = new List<AppUsage>();
-            using var connection = new SqliteConnection($"Data Source={_dbPath};Version=3;");
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
             string sql = @"SELECT id, AppName,UsageDate, TimeUsedSeconds FROM AppUsage WHERE UsageDate = @today;";

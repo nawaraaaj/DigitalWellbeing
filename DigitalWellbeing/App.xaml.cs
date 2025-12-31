@@ -2,6 +2,7 @@
 using System.Data;
 using System.Windows;
 using DigitalWellbeing.Data;
+using SQLitePCL;
 
 namespace DigitalWellbeing
 {
@@ -11,6 +12,7 @@ namespace DigitalWellbeing
         {
             base.OnStartup(e);
 
+            Batteries.Init();
             DatabaseInitializer.Initialize();
         }
     }

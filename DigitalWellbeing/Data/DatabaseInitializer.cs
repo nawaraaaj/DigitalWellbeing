@@ -37,7 +37,8 @@ namespace DigitalWellbeing.Data
                 CREATE TABLE IF NOT EXISTS DailySummary (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     UsageDate TEXT NOT NULL,
-                    TotalTimeSeconds INTEGER NOT NULL
+                    TotalTimeSeconds INTEGER NOT NULL,
+                     AppUsageBreakdown TEXT
                 );";
 
             using var cmd = connection.CreateCommand();
