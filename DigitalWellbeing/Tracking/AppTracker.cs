@@ -1,32 +1,35 @@
 ﻿using DigitalWellbeing.Services;
 using System.Timers;
-using System.Threading;
+using System.Xml.Serialization;
 
 namespace DigitalWellbeing.Tracking
 {
-   public class AppTracker
+    public class AppTracker
     {
         private readonly System.Timers.Timer _timer;
-        private readonly AppUsageService _appUsageService;
+        private readonly AppUsageService _appusageService;
         private readonly DailySummaryService _dailySummaryService;
 
         private string _currentAppName;
-        private DateTime _currentAppStartTime;
+        private DateTime _lastSwitchTime;
         private DateTime _lastTrackedDate;
+        
 
+        private int _accumulatedSeconds;
         private bool _isTracking;
 
         public AppTracker()
         {
-            _appUsageService = new AppUsageService();
+            _appusageService = new AppUsageService();
             _dailySummaryService = new DailySummaryService();
 
             _timer = new System.Timers.Timer(1000);
             _timer.Elapsed += OnTimerElapsed;
 
             _currentAppName = string.Empty;
-            _currentAppStartTime = DateTime.Now;
-            _lastTrackedDate = DateTime.Now;
+            _lastSwitchTime = DateTime.Now;
+            _lastTrackedDate = DateTime.Today;
+            _accumulatedSeconds = 0;
         }
 
         public void StartTracking()
@@ -35,9 +38,10 @@ namespace DigitalWellbeing.Tracking
                 return;
 
             _isTracking = true;
-            _currentAppStartTime = DateTime.Now;
             _currentAppName = Win32Api.GetActiveApplicationName();
-            _lastTrackedDate = DateTime.Now;
+            _lastSwitchTime = DateTime.Now;
+            _lastTrackedDate = DateTime.Today;
+            _accumulatedSeconds = 0;
 
             _timer.Start();
         }
@@ -48,6 +52,7 @@ namespace DigitalWellbeing.Tracking
                 return;
 
             _timer.Stop();
+            AccumulateTime();
             SaveCurrentAppUsage();
             _isTracking = false;
         }
@@ -58,6 +63,7 @@ namespace DigitalWellbeing.Tracking
                 return;
 
             _timer.Stop();
+            AccumulateTime();
             SaveCurrentAppUsage();
         }
 
@@ -66,8 +72,8 @@ namespace DigitalWellbeing.Tracking
             if (!_isTracking)
                 return;
 
-            _currentAppStartTime = DateTime.Now;
             _currentAppName = Win32Api.GetActiveApplicationName();
+            _lastSwitchTime = DateTime.Now;
             _timer.Start();
         }
 
@@ -76,37 +82,46 @@ namespace DigitalWellbeing.Tracking
             HandleDateChange();
 
             string activeApp = Win32Api.GetActiveApplicationName();
-
             if (string.IsNullOrWhiteSpace(activeApp))
                 return;
 
             if (_currentAppName == string.Empty)
             {
                 _currentAppName = activeApp;
-                _currentAppStartTime = DateTime.Now;
+                _lastSwitchTime = DateTime.Now;
                 return;
             }
 
             if (!activeApp.Equals(_currentAppName, StringComparison.OrdinalIgnoreCase))
             {
+                AccumulateTime();
                 SaveCurrentAppUsage();
+
                 _currentAppName = activeApp;
-                _currentAppStartTime = DateTime.Now;
+                _lastSwitchTime = DateTime.Now;
             }
         }
 
+        private void AccumulateTime()
+        {
+            int seconds = (int)(DateTime.Now - _lastSwitchTime).TotalSeconds;
+
+            if (seconds > 0)
+                _accumulatedSeconds += seconds;
+
+            _lastSwitchTime = DateTime.Now;
+        }
         private void SaveCurrentAppUsage()
         {
             if (string.IsNullOrWhiteSpace(_currentAppName))
                 return;
 
-            int secondsUsed = (int)(DateTime.Now - _currentAppStartTime).TotalSeconds;
-
-            if (secondsUsed <= 0)
+            if (_accumulatedSeconds <= 0)
                 return;
 
-            _appUsageService.AddAppUsage(_currentAppName,secondsUsed);
+            _appusageService.AddAppUsage(_currentAppName, _accumulatedSeconds);
 
+            _accumulatedSeconds = 0;
         }
 
         private void HandleDateChange()
@@ -114,10 +129,11 @@ namespace DigitalWellbeing.Tracking
             if (DateTime.Today == _lastTrackedDate)
                 return;
 
+            AccumulateTime();
             SaveCurrentAppUsage();
-            _lastTrackedDate = DateTime.Today;
-            _currentAppStartTime = DateTime.Now;
-        }
 
+            _lastTrackedDate = DateTime.Today;
+            _lastSwitchTime = DateTime.Now;
+        }
     }
 }

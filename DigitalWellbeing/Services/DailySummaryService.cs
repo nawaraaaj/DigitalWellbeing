@@ -18,15 +18,14 @@ namespace DigitalWellbeing.Services
         }
 
         
-        public DailySummary? GenerateOrUpdateDailySummary(DateTime date)
+       public DailySummary? GenerateOrUpdateDailySummary()
         {
-            var appUsages = GetAppUsagesForDate(date);
+            var appUsages = GetAppUsagesForToday();
             if (!appUsages.Any())
                 return null;
 
-            // Aggregate usage per app
             var appUsageDict = new Dictionary<string, int>();
-            foreach (var usage in appUsages)
+            foreach( var usage in appUsages)
             {
                 if (appUsageDict.ContainsKey(usage.AppName))
                     appUsageDict[usage.AppName] += usage.TimeUsedSeconds;
@@ -40,19 +39,16 @@ namespace DigitalWellbeing.Services
             using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
-            // Check if summary already exists
-            string checkSql = "SELECT Id FROM DailySummary WHERE UsageDate = @date;";
+            string checkSql = "SELECT Id FROM DailySummary WHERE UsageDate = date('now','localtime');";
+
             using var checkCmd = new SqliteCommand(checkSql, connection);
-            checkCmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
             object? result = checkCmd.ExecuteScalar();
 
             if (result != null)
             {
-                // Update existing record
                 int id = Convert.ToInt32(result);
-                string updateSql = @"UPDATE DailySummary 
-                                     SET TotalTimeSeconds = @total, AppUsageBreakdown = @breakdown 
-                                     WHERE Id = @id;";
+
+                string updateSql = @"UPDATE DailySummary SET TotalTimeSeconds = @total, AppUsageBreakdown = @breakdown WHERE Id = @id;";
 
                 using var updateCmd = new SqliteCommand(updateSql, connection);
                 updateCmd.Parameters.AddWithValue("@total", totalTime);
@@ -63,50 +59,47 @@ namespace DigitalWellbeing.Services
                 return new DailySummary
                 {
                     Id = id,
-                    UsageDate = date.Date,
+                    UsageDate = DateTime.Today,
                     TotalTimeSeconds = totalTime,
                     AppUsageBreakdown = jsonBreakdown
                 };
             }
             else
             {
-                // Insert new record
-                string insertSql = @"INSERT INTO DailySummary (UsageDate, TotalTimeSeconds, AppUsageBreakdown)
-                                     VALUES (@date, @total, @breakdown);";
+                string insertSql = @"INSERT INTO DailySummary (UsageDate, TotalTimeSeconds, AppUsageBreakdown) VALUES (date('now','localtime'), @total, @breakdown);";
+
                 using var insertCmd = new SqliteCommand(insertSql, connection);
-                insertCmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
                 insertCmd.Parameters.AddWithValue("@total", totalTime);
-                insertCmd.Parameters.AddWithValue("@breakdown", jsonBreakdown);
+                insertCmd.Parameters.AddWithValue("breakdown", jsonBreakdown);
                 insertCmd.ExecuteNonQuery();
 
                 long newId;
                 using (var cmd = new SqliteCommand("SELECT last_insert_rowid();", connection))
                 {
-                    newId = Convert.ToInt64(cmd.ExecuteScalar() ?? 0L);
+                    newId = Convert.ToInt64(cmd.ExecuteScalar());
                 }
-
                 return new DailySummary
                 {
                     Id = (int)newId,
-                    UsageDate = date.Date,
+                    UsageDate = DateTime.Today,
                     TotalTimeSeconds = totalTime,
                     AppUsageBreakdown = jsonBreakdown
                 };
             }
+
         }
 
         /// Fetch all AppUsage records for a specific date
-        private List<AppUsage> GetAppUsagesForDate(DateTime date)
+        private List<AppUsage> GetAppUsagesForToday()
         {
             var list = new List<AppUsage>();
             using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
             string sql = @"SELECT Id, AppName, UsageDate, TimeUsedSeconds 
-                           FROM AppUsage 
-                           WHERE UsageDate = @date;";
+              FROM AppUsage 
+              WHERE UsageDate = date('now','localtime');";
             using var cmd = new SqliteCommand(sql, connection);
-            cmd.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())

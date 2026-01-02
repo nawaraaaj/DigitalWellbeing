@@ -23,15 +23,19 @@ namespace DigitalWellbeing.Services
             using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
-            string insertSql = @"INSERT INTO AppUsage (AppName,UsageDate, TimeUsedSeconds) Values (@appName, @date, @timeUsed);";
+            using (var pragmaCmd = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+            {
+                pragmaCmd.ExecuteNonQuery();
+            }
+
+            string insertSql = @"INSERT INTO AppUsage (AppName,UsageDate, TimeUsedSeconds) Values (@appName, date('now','localtime'), @timeUsed);";
             using var cmd = new SqliteCommand(insertSql, connection);
             cmd.Parameters.AddWithValue("@appName", appName);
-            cmd.Parameters.AddWithValue("@date", DateTime.Today.ToString("yyyy-MM-dd"));
             cmd.Parameters.AddWithValue("@timeUsed", timeUsedSeconds);
-
+            
             cmd.ExecuteNonQuery();
 
-            _dailySummaryService.GenerateOrUpdateDailySummary(DateTime.Today);
+            _dailySummaryService.GenerateOrUpdateDailySummary();
         }
 
         //get all app usage records for today
@@ -41,9 +45,12 @@ namespace DigitalWellbeing.Services
             using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
-            string sql = @"SELECT id, AppName,UsageDate, TimeUsedSeconds FROM AppUsage WHERE UsageDate = @today;";
+            string sql = @"SELECT id, AppName, UsageDate, TimeUsedSeconds
+               FROM AppUsage
+               WHERE date(UsageDate, 'localtime') = date('now','localtime');";
+
             using var cmd = new SqliteCommand(sql, connection);
-            cmd.Parameters.AddWithValue("@today", DateTime.Today.ToString("yyyy-MM-dd"));
+           
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())

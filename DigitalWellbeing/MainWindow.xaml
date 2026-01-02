@@ -13,11 +13,12 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="0*"/>
             <ColumnDefinition Width="0*"/>
+            <ColumnDefinition Width="0*"/>
             <ColumnDefinition Width="28*"/>
             <ColumnDefinition Width="113*"/>
             <ColumnDefinition Width="309*"/>
         </Grid.ColumnDefinitions>
-        <views:DashboardView Margin="-1,0,1,0" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="5" >
+        <views:DashboardView Margin="-1,0,1,0" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="6" >
             <views:DashboardView.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform/>

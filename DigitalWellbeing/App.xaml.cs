@@ -14,6 +14,12 @@ namespace DigitalWellbeing
 
             Batteries.Init();
             DatabaseInitializer.Initialize();
+
+            var tracker = new Tracking.AppTracker();
+            tracker.StartTracking();
+
+            var summaryService = new Services.DailySummaryService();
+            summaryService.GenerateOrUpdateDailySummary();
         }
     }
 }
