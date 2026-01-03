@@ -18,23 +18,49 @@ namespace DigitalWellbeing.Services
         }
 
         //new app usage record
-        public void AddAppUsage ( string appName, int timeUsedSeconds)
+        public void AddAppUsage(string appName, int timeUsedSeconds)
         {
-            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            using var connection = new SqliteConnection($"Data Source= {_dbPath}");
             connection.Open();
 
-            using (var pragmaCmd = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+            string today = DateTime.Today.ToString("yyyy-MM-dd");
+
+            string checkSql = @"SELECT Id, TimeUsedSeconds
+                                FROM AppUsage
+                                WHERE AppName = @app AND UsageDate = @date;";
+
+            using var checkCmd = new SqliteCommand(checkSql, connection);
+            checkCmd.Parameters.AddWithValue("@app", appName);
+            checkCmd.Parameters.AddWithValue("@date", today);
+
+            using var reader = checkCmd.ExecuteReader();
+
+            if(reader.Read())
             {
-                pragmaCmd.ExecuteNonQuery();
+                int id = reader.GetInt32(0);
+                int existingSeconds = reader.GetInt32(1);
+                reader.Close();
+
+                string updateSql = @"UPDATE AppUsage SET 
+                                    TimeUsedSeconds = @total
+                                    WHERE Id = @id;";
+
+                using var updateCmd = new SqliteCommand( updateSql, connection);
+                updateCmd.Parameters.AddWithValue("@total",existingSeconds + timeUsedSeconds);
+                updateCmd.Parameters.AddWithValue("@id", id);
+                updateCmd.ExecuteNonQuery();
             }
+            else
+            {
+                string insertSql = @"INSERT INTO AppUsage (AppName, UsageDate, TimeUsedSeconds)
+                    Values(@app, @date, @time);";
 
-            string insertSql = @"INSERT INTO AppUsage (AppName,UsageDate, TimeUsedSeconds) Values (@appName, date('now','localtime'), @timeUsed);";
-            using var cmd = new SqliteCommand(insertSql, connection);
-            cmd.Parameters.AddWithValue("@appName", appName);
-            cmd.Parameters.AddWithValue("@timeUsed", timeUsedSeconds);
-            
-            cmd.ExecuteNonQuery();
-
+                using var insertCmd = new SqliteCommand(insertSql, connection);
+                insertCmd.Parameters.AddWithValue("@app", appName);
+                insertCmd.Parameters.AddWithValue("@date", today);
+                insertCmd.Parameters.AddWithValue("@time", timeUsedSeconds);
+                insertCmd.ExecuteNonQuery();
+            }
             _dailySummaryService.GenerateOrUpdateDailySummary();
         }
 
@@ -45,9 +71,12 @@ namespace DigitalWellbeing.Services
             using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
-            string sql = @"SELECT id, AppName, UsageDate, TimeUsedSeconds
-               FROM AppUsage
-               WHERE date(UsageDate, 'localtime') = date('now','localtime');";
+            string sql = @"SELECT AppName,
+                            SUM(TimeUsedSeconds) AS TotalSeconds
+                            FROM AppUsage WHERE
+                            UsageDate = date('now','localtime')
+                            GROUP BY AppName
+                            ORDER BY TotalSeconds Desc;";
 
             using var cmd = new SqliteCommand(sql, connection);
            
@@ -57,10 +86,9 @@ namespace DigitalWellbeing.Services
             {
                 list.Add(new AppUsage
                 {
-                    Id = reader.GetInt32(0),
-                    AppName = reader.GetString(1),
-                    UsageDate = DateTime.Parse(reader.GetString(2)),
-                    TimeUsedSeconds = reader.GetInt32(3)
+                    AppName = reader.GetString(0),
+                    TimeUsedSeconds = reader.GetInt32(1),
+                    UsageDate = DateTime.Today
                 });
             }
             return list;
