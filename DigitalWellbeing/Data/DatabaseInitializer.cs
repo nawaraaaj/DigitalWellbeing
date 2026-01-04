@@ -36,7 +36,7 @@ namespace DigitalWellbeing.Data
             var createDailySummaryTable = @"
                 CREATE TABLE IF NOT EXISTS DailySummary (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    UsageDate TEXT NOT NULL,
+                    UsageDate TEXT NOT NULL UNIQUE,
                     TotalTimeSeconds INTEGER NOT NULL,
                      AppUsageBreakdown TEXT
                 );";

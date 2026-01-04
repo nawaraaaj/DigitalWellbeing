@@ -20,7 +20,7 @@ namespace DigitalWellbeing.Services
         //new app usage record
         public void AddAppUsage(string appName, int timeUsedSeconds)
         {
-            using var connection = new SqliteConnection($"Data Source= {_dbPath}");
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
             string today = DateTime.Today.ToString("yyyy-MM-dd");

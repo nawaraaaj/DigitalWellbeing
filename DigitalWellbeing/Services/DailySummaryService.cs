@@ -39,54 +39,25 @@ namespace DigitalWellbeing.Services
             using var connection = new SqliteConnection($"Data Source={_dbPath}");
             connection.Open();
 
-            string checkSql = "SELECT Id FROM DailySummary WHERE UsageDate = date('now','localtime');";
+            string sql = @"
+                    INSERT INTO DailySummary (UsageDate, TotalTimeSeconds, AppUsageBreakdown)
+                    VALUES (date('now','localtime'), @total, @breakdown)
+                    ON CONFLICT(UsageDate)
+                     DO UPDATE SET
+                    TotalTimeSeconds = excluded.TotalTimeSeconds,
+                    AppUsageBreakdown = excluded.AppUsageBreakdown;";
 
-            using var checkCmd = new SqliteCommand(checkSql, connection);
-            object? result = checkCmd.ExecuteScalar();
+            using var cmd = new SqliteCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@total", totalTime);
+            cmd.Parameters.AddWithValue("@breakdown", jsonBreakdown);
+            cmd.ExecuteNonQuery();
 
-            if (result != null)
+            return new DailySummary
             {
-                int id = Convert.ToInt32(result);
-
-                string updateSql = @"UPDATE DailySummary SET TotalTimeSeconds = @total, AppUsageBreakdown = @breakdown WHERE Id = @id;";
-
-                using var updateCmd = new SqliteCommand(updateSql, connection);
-                updateCmd.Parameters.AddWithValue("@total", totalTime);
-                updateCmd.Parameters.AddWithValue("@breakdown", jsonBreakdown);
-                updateCmd.Parameters.AddWithValue("@id", id);
-                updateCmd.ExecuteNonQuery();
-
-                return new DailySummary
-                {
-                    Id = id,
-                    UsageDate = DateTime.Today,
-                    TotalTimeSeconds = totalTime,
-                    AppUsageBreakdown = jsonBreakdown
-                };
-            }
-            else
-            {
-                string insertSql = @"INSERT INTO DailySummary (UsageDate, TotalTimeSeconds, AppUsageBreakdown) VALUES (date('now','localtime'), @total, @breakdown);";
-
-                using var insertCmd = new SqliteCommand(insertSql, connection);
-                insertCmd.Parameters.AddWithValue("@total", totalTime);
-                insertCmd.Parameters.AddWithValue("breakdown", jsonBreakdown);
-                insertCmd.ExecuteNonQuery();
-
-                long newId;
-                using (var cmd = new SqliteCommand("SELECT last_insert_rowid();", connection))
-                {
-                    newId = Convert.ToInt64(cmd.ExecuteScalar());
-                }
-                return new DailySummary
-                {
-                    Id = (int)newId,
-                    UsageDate = DateTime.Today,
-                    TotalTimeSeconds = totalTime,
-                    AppUsageBreakdown = jsonBreakdown
-                };
-            }
-
+                UsageDate = DateTime.Today,
+                TotalTimeSeconds = totalTime,
+                AppUsageBreakdown = jsonBreakdown
+            };
         }
 
         /// Fetch all AppUsage records for a specific date
