@@ -47,9 +47,9 @@
                                         Width="200"
                                         DisplayMemberBinding="{Binding AppName}"/>
 
-                        <GridViewColumn Header="Time Used (seconds)"
+                        <GridViewColumn Header="Time Used (HH:MM)"
                                         Width="150"
-                                        DisplayMemberBinding="{Binding TimeUsedSeconds}"/>
+                                        DisplayMemberBinding="{Binding FormattedTime}"/>
                     </GridView>
                 </ListView.View>
             </ListView>

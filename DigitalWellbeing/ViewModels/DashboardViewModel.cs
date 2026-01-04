@@ -31,9 +31,14 @@ namespace DigitalWellbeing.ViewModels
             get
             {
                 var ts = TimeSpan.FromSeconds(_totalScreenTimeSeconds);
-                return $"{(int)ts.TotalHours:D2}:{ts.Minutes:D2}"; 
+
+                if (ts.TotalHours >= 1)
+                    return $"{(int)ts.TotalHours} hr, {ts.Minutes} min";
+
+                return $"{ts.Minutes} min";
             }
         }
+
 
 
         private ObservableCollection<AppUsage> _todayAppUsages = new ObservableCollection<AppUsage>();
@@ -69,7 +74,7 @@ namespace DigitalWellbeing.ViewModels
                 total += usage.TimeUsedSeconds;
             }
 
-            _totalScreenTimeSeconds = total;
+            TotalScreenTimeSeconds = total;
             OnPropertyChanged(nameof(TotalTimeToday));
         }
     }
