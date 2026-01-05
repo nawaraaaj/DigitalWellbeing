@@ -2,6 +2,7 @@
 using System.Data;
 using System.Windows;
 using DigitalWellbeing.Data;
+using DigitalWellbeing.Helpers;
 using SQLitePCL;
 
 namespace DigitalWellbeing
@@ -14,6 +15,11 @@ namespace DigitalWellbeing
 
             Batteries.Init();
             DatabaseInitializer.Initialize();
+
+            StartupManager.EnsureStartup();
+
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.Show();
 
             var tracker = new Tracking.AppTracker();
             tracker.StartTracking();
