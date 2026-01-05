@@ -9,7 +9,8 @@ namespace DigitalWellbeing
 {
     public partial class App : Application
     {
-       protected override void OnStartup(StartupEventArgs e)
+        private Tracking.AppTracker? _tracker;
+        protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
@@ -18,14 +19,8 @@ namespace DigitalWellbeing
 
             StartupManager.EnsureStartup();
 
-            MainWindow mainWindow = new MainWindow();
-            mainWindow.Show();
-
-            var tracker = new Tracking.AppTracker();
-            tracker.StartTracking();
-
-            var summaryService = new Services.DailySummaryService();
-            summaryService.GenerateOrUpdateDailySummary();
+            _tracker = new Tracking.AppTracker();
+            _tracker.StartTracking();
         }
     }
 }

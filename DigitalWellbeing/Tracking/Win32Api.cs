@@ -1,12 +1,6 @@
-﻿using System;
-using System.CodeDom;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.NetworkInformation;
+﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DigitalWellbeing.Tracking
 {
@@ -23,48 +17,54 @@ namespace DigitalWellbeing.Tracking
 
         private const int MaxWindowTitleLength = 256;
 
-        public static IntPtr GetActiveWindowHandle()
+        public static string? GetActiveApplicationName()
         {
-            return GetForegroundWindow();
-        }
-
-        public static string GetActiveWindowTitle()
-        {
+           
             IntPtr handle = GetForegroundWindow();
             if (handle == IntPtr.Zero)
-                return string.Empty;
+                return null;
 
-            StringBuilder title = new StringBuilder(MaxWindowTitleLength);
-            GetWindowText(handle, title, MaxWindowTitleLength);
+            const int nChars = 256;
+            StringBuilder titleBuffer = new StringBuilder(nChars);
 
-            return title.ToString();
-        }
-
-        public static uint GetActiveProcessId()
-        {
-            IntPtr handle = GetForegroundWindow();
-            if (handle == IntPtr.Zero)
-                return 0;
-
+            if (GetWindowText(handle, titleBuffer, nChars) > 0)
+            {
+                string title = titleBuffer.ToString().Trim();
+                if (!string.IsNullOrWhiteSpace(title))
+                    return ExtractAppName(title);
+            }
             GetWindowThreadProcessId(handle, out uint processId);
-            return processId;
-        }
+            if (processId == 0)
+                return null;
 
-        public static string GetActiveApplicationName()
-        {
             try
             {
-                uint pid = GetActiveProcessId();
-                if (pid == 0)
-                    return string.Empty;
-
-                Process process = Process.GetProcessById((int)pid);
-                return process.ProcessName;
+                var process = Process.GetProcessById((int)processId);
+                return process.ProcessName; 
             }
             catch
             {
-                return string.Empty;
+                return null;
             }
+        }
+
+        private static string ExtractAppName(string windowTitle)
+        {
+            if (string.IsNullOrWhiteSpace(windowTitle))
+                return null;
+
+            string[] separators = { " - ", " — ", " | " };
+
+            foreach (var sep in separators)
+            {
+                if (windowTitle.Contains(sep))
+                {
+                    var parts = windowTitle.Split(new[] { sep }, StringSplitOptions.RemoveEmptyEntries);
+                    return parts.Last().Trim();
+                }
+            }
+
+            return windowTitle.Trim();
         }
     }
 }

@@ -8,7 +8,6 @@ namespace DigitalWellbeing
     
     public partial class MainWindow : Window
     {
-        private AppTracker _appTracker;
         public MainWindow()
         {
             InitializeComponent();
@@ -16,9 +15,6 @@ namespace DigitalWellbeing
             DatabaseInitializer.Initialize();
 
             DataContext = new DashboardViewModel();
-
-            _appTracker = new AppTracker();
-            _appTracker.StartTracking();
         }
     }
 }
