@@ -22,7 +22,7 @@ namespace DigitalWellbeing.Helpers
 
                 if(existingValue == null || existingValue.ToString() != exePath)
                 {
-                    key.SetValue(AppName, $"\"{exePath}\"");
+                    key.SetValue(AppName, $"\"{exePath}\" --background");
                 }
             }
         }

@@ -38,7 +38,7 @@ namespace DigitalWellbeing.Tracking
                 return;
 
             _isTracking = true;
-            _currentAppName = Win32Api.GetActiveApplicationName();
+            _currentAppName = Win32Api.GetActiveApplicationName() ?? string.Empty;
             _lastSwitchTime = DateTime.Now;
             _lastTrackedDate = DateTime.Today;
             _accumulatedSeconds = 0;
@@ -72,7 +72,7 @@ namespace DigitalWellbeing.Tracking
             if (!_isTracking)
                 return;
 
-            _currentAppName = Win32Api.GetActiveApplicationName();
+            _currentAppName = Win32Api.GetActiveApplicationName() ?? string.Empty;
             _lastSwitchTime = DateTime.Now;
             _timer.Start();
         }
@@ -81,7 +81,7 @@ namespace DigitalWellbeing.Tracking
         {
             HandleDateChange();
 
-            string activeApp = Win32Api.GetActiveApplicationName();
+            string activeApp = Win32Api.GetActiveApplicationName()?? string.Empty;
             if (string.IsNullOrWhiteSpace(activeApp))
                 return;
 
