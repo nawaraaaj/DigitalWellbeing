@@ -1,6 +1,5 @@
-﻿using DigitalWellbeing.Services;
+﻿using DigitalWellbeing.Core.Services;
 using System.Timers;
-using System.Xml.Serialization;
 
 namespace DigitalWellbeing.Tracker
 {
@@ -8,8 +7,7 @@ namespace DigitalWellbeing.Tracker
     {
         private readonly System.Timers.Timer _timer;
         private readonly AppUsageService _appusageService;
-        private readonly DailySummaryService _dailySummaryService;
-
+    
         private string _currentAppName;
         private DateTime _lastSwitchTime;
         private DateTime _lastTrackedDate;
@@ -17,11 +15,11 @@ namespace DigitalWellbeing.Tracker
 
         private int _accumulatedSeconds;
         private bool _isTracking;
+        private bool _isTickRunning;
 
         public AppTracker()
         {
             _appusageService = new AppUsageService();
-            _dailySummaryService = new DailySummaryService();
 
             _timer = new System.Timers.Timer(1000);
             _timer.Elapsed += OnTimerElapsed;
@@ -79,26 +77,38 @@ namespace DigitalWellbeing.Tracker
 
         private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
         {
-            HandleDateChange();
-
-            string activeApp = Win32Api.GetActiveApplicationName()?? string.Empty;
-            if (string.IsNullOrWhiteSpace(activeApp))
+            if (_isTickRunning)
                 return;
 
-            if (_currentAppName == string.Empty)
+            _isTickRunning = true;
+
+            try
             {
-                _currentAppName = activeApp;
-                _lastSwitchTime = DateTime.Now;
-                return;
+                HandleDateChange();
+
+                string activeApp = Win32Api.GetActiveApplicationName() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(activeApp))
+                    return;
+
+                if (_currentAppName == string.Empty)
+                {
+                    _currentAppName = activeApp;
+                    _lastSwitchTime = DateTime.Now;
+                    return;
+                }
+
+                if (!activeApp.Equals(_currentAppName, StringComparison.OrdinalIgnoreCase))
+                {
+                    AccumulateTime();
+                    SaveCurrentAppUsage();
+
+                    _currentAppName = activeApp;
+                    _lastSwitchTime = DateTime.Now;
+                }
             }
-
-            if (!activeApp.Equals(_currentAppName, StringComparison.OrdinalIgnoreCase))
+            finally
             {
-                AccumulateTime();
-                SaveCurrentAppUsage();
-
-                _currentAppName = activeApp;
-                _lastSwitchTime = DateTime.Now;
+                _isTickRunning = false;
             }
         }
 
