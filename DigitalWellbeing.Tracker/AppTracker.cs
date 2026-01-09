@@ -2,7 +2,7 @@
 using System.Timers;
 using System.Xml.Serialization;
 
-namespace DigitalWellbeing.Tracking
+namespace DigitalWellbeing.Tracker
 {
     public class AppTracker
     {

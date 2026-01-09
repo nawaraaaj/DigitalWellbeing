@@ -1,26 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+using DigitalWellbeing.Core.Data;
+using DigitalWellbeing.Core.Models;
 using Microsoft.Data.Sqlite;
-using DigitalWellbeing.Models;
-using DigitalWellbeing.Data;
-using System.Xml;
-namespace DigitalWellbeing.Services
+using System.Collections.Generic;
+
+namespace DigitalWellbeing.Core.Services
 {
     public class AppUsageService
     {
-        private readonly string _dbPath;
+        private readonly string dbPath;
         private readonly DailySummaryService _dailySummaryService;
 
         public AppUsageService()
         {
-            _dbPath = DatabaseInitializer.GetDatabasePath();
+            dbPath = DatabaseInitializer.GetDatabasePath();
             _dailySummaryService = new DailySummaryService();
         }
 
         //new app usage record
         public void AddAppUsage(string appName, int timeUsedSeconds)
         {
-            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
 
             string today = DateTime.Today.ToString("yyyy-MM-dd");
@@ -39,7 +39,6 @@ namespace DigitalWellbeing.Services
             {
                 int id = reader.GetInt32(0);
                 int existingSeconds = reader.GetInt32(1);
-                reader.Close();
 
                 string updateSql = @"UPDATE AppUsage SET 
                                     TimeUsedSeconds = @total
@@ -61,6 +60,7 @@ namespace DigitalWellbeing.Services
                 insertCmd.Parameters.AddWithValue("@time", timeUsedSeconds);
                 insertCmd.ExecuteNonQuery();
             }
+
             _dailySummaryService.GenerateOrUpdateDailySummary();
         }
 
@@ -68,18 +68,21 @@ namespace DigitalWellbeing.Services
         public List<AppUsage> GetTodayUsage()
         {
             var list = new List<AppUsage>();
-            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
+
+            string today = DateTime.Today.ToString("yyyy-MM-dd");
 
             string sql = @"SELECT AppName,
                             SUM(TimeUsedSeconds) AS TotalSeconds
                             FROM AppUsage WHERE
-                            UsageDate = date('now','localtime')
+                            UsageDate = @date
                             GROUP BY AppName
-                            ORDER BY TotalSeconds Desc;";
+                            ORDER BY TotalSeconds DESC;";
 
             using var cmd = new SqliteCommand(sql, connection);
-           
+            cmd.Parameters.AddWithValue("@date", today);
+
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())

@@ -1,20 +1,20 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace DigitalWellbeing.Tracking
+namespace DigitalWellbeing.Tracker
 {
     public static class Win32Api
     {
         [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
+        private static extern nint GetForegroundWindow();
 
         [DllImport("user32.dll")]
-        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+        private static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
 
         public static string? GetActiveApplicationName()
         {
-            IntPtr handle = GetForegroundWindow();
-            if (handle == IntPtr.Zero)
+            nint handle = GetForegroundWindow();
+            if (handle == nint.Zero)
                 return null;
 
             GetWindowThreadProcessId(handle, out uint processId);

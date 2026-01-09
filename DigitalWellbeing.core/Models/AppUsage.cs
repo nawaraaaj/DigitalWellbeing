@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DigitalWellbeing.Models
+namespace DigitalWellbeing.Core.Models
 {
     public class AppUsage
     {

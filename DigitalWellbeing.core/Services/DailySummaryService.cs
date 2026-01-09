@@ -1,20 +1,17 @@
-﻿using DigitalWellbeing.Data;
-using DigitalWellbeing.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
+﻿using DigitalWellbeing.Core.Data;
+using DigitalWellbeing.Core.Models;
 using Microsoft.Data.Sqlite;
+using System.Text.Json;
 
-namespace DigitalWellbeing.Services
+namespace DigitalWellbeing.Core.Services
 {
     public class DailySummaryService
     {
-        private readonly string _dbPath;
+        private readonly string dbPath;
 
         public DailySummaryService()
         {
-            _dbPath = DatabaseInitializer.GetDatabasePath();
+            dbPath = DatabaseInitializer.GetDatabasePath();
         }
 
         
@@ -36,7 +33,7 @@ namespace DigitalWellbeing.Services
             int totalTime = appUsageDict.Values.Sum();
             string jsonBreakdown = JsonSerializer.Serialize(appUsageDict);
 
-            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
 
             string sql = @"
@@ -64,7 +61,7 @@ namespace DigitalWellbeing.Services
         private List<AppUsage> GetAppUsagesForToday()
         {
             var list = new List<AppUsage>();
-            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
 
             string sql = @"SELECT Id, AppName, UsageDate, TimeUsedSeconds 

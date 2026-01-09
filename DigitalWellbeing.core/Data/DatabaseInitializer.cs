@@ -1,8 +1,7 @@
-﻿using System;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using System.IO;
 
-namespace DigitalWellbeing.Data
+namespace DigitalWellbeing.Core.Data
 {
     public static class DatabaseInitializer
     {
@@ -10,14 +9,20 @@ namespace DigitalWellbeing.Data
 
         public static string GetDatabasePath()
         {
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DbFileName);
+            var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DigitalWellbeing");
+
+            Directory.CreateDirectory(folder);
+            return Path.Combine(folder, DbFileName);
         }
 
         public static void Initialize()
         {
+            SQLitePCL.Batteries.Init();
+
             var dbPath = GetDatabasePath();
 
             using var connection = new SqliteConnection($"Data Source={dbPath}");
+
             connection.Open();
 
             CreateTables(connection);

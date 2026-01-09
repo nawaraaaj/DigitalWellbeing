@@ -14,4 +14,8 @@
     <PackageReference Include="System.Drawing.Common" Version="10.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DigitalWellbeing.core\DigitalWellbeing.Core.csproj" />
+  </ItemGroup>
+
 </Project>
