@@ -23,7 +23,7 @@ namespace DigitalWellbeing.Tracker
 
             try
             {
-                // returns user-friendly app name from app-metadata
+                // returns user-friendly app name from app-metadata or process-name
                 var process = Process.GetProcessById((int)processId);
                 string? friendlyName = process.MainModule?.FileVersionInfo?.FileDescription;
                 return !string.IsNullOrEmpty(friendlyName) ? friendlyName : process.ProcessName;

@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DigitalWellbeing.Core.Models;
+using DigitalWellbeing.Core.Services;
 using System.Collections.ObjectModel;
-using DigitalWellbeing.Models;
-using DigitalWellbeing.Services;
 using System.Windows.Threading;
-using System.Security.Principal;
 
 namespace DigitalWellbeing.ViewModels
 {

@@ -45,9 +45,15 @@ namespace DigitalWellbeing.Core.Services
                     AppUsageBreakdown = excluded.AppUsageBreakdown;";
 
             using var cmd = new SqliteCommand(sql, connection);
+
+            using var pragmaCmd = connection.CreateCommand();
+            pragmaCmd.CommandText = "PRAGMA journal_mode=WAL;";
+            pragmaCmd.ExecuteNonQuery();
+
             cmd.Parameters.AddWithValue("@total", totalTime);
             cmd.Parameters.AddWithValue("@breakdown", jsonBreakdown);
             cmd.ExecuteNonQuery();
+
 
             return new DailySummary
             {

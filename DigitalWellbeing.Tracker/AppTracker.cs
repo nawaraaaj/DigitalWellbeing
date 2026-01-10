@@ -7,6 +7,9 @@ namespace DigitalWellbeing.Tracker
     {
         private readonly System.Timers.Timer _timer;
         private readonly AppUsageService _appusageService;
+        private readonly DailySummaryService _dailySummaryService;
+
+        private DateTime _lastSummaryUpdate;
     
         private string _currentAppName;
         private DateTime _lastSwitchTime;
@@ -20,6 +23,7 @@ namespace DigitalWellbeing.Tracker
         public AppTracker()
         {
             _appusageService = new AppUsageService();
+            _dailySummaryService = new DailySummaryService();
 
             _timer = new System.Timers.Timer(1000);
             _timer.Elapsed += OnTimerElapsed;
@@ -28,6 +32,7 @@ namespace DigitalWellbeing.Tracker
             _lastSwitchTime = DateTime.Now;
             _lastTrackedDate = DateTime.Today;
             _accumulatedSeconds = 0;
+            _lastSummaryUpdate = DateTime.Now;
         }
 
         public void StartTracking()
@@ -130,6 +135,12 @@ namespace DigitalWellbeing.Tracker
                 return;
 
             _appusageService.AddAppUsage(_currentAppName, _accumulatedSeconds);
+
+            if ((DateTime.Now - _lastSummaryUpdate).TotalSeconds >= 60)
+            {
+                _dailySummaryService.GenerateOrUpdateDailySummary();
+                _lastSummaryUpdate = DateTime.Now;
+            }
 
             _accumulatedSeconds = 0;
         }

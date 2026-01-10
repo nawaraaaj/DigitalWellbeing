@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DigitalWellbeing.core\DigitalWellbeing.Core.csproj" />
+    <ProjectReference Include="..\DigitalWellbeing.Tracker\DigitalWellbeing.Tracker.csproj" />
   </ItemGroup>
 
 </Project>

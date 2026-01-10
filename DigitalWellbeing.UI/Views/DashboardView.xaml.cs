@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+﻿using DigitalWellbeing.ViewModels;
 
 namespace DigitalWellbeing.Views
 {
@@ -7,6 +7,7 @@ namespace DigitalWellbeing.Views
         public DashboardView()
         {
             InitializeComponent();
+            DataContext = new DashboardViewModel();
         }
     }
 }

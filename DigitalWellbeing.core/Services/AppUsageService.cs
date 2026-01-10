@@ -2,7 +2,6 @@
 using DigitalWellbeing.Core.Data;
 using DigitalWellbeing.Core.Models;
 using Microsoft.Data.Sqlite;
-using System.Collections.Generic;
 
 namespace DigitalWellbeing.Core.Services
 {
@@ -60,8 +59,6 @@ namespace DigitalWellbeing.Core.Services
                 insertCmd.Parameters.AddWithValue("@time", timeUsedSeconds);
                 insertCmd.ExecuteNonQuery();
             }
-
-            _dailySummaryService.GenerateOrUpdateDailySummary();
         }
 
         //get all app usage records for today

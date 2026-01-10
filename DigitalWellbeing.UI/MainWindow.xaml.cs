@@ -1,5 +1,4 @@
-﻿using DigitalWellbeing.Data;
-using DigitalWellbeing.Tracking;
+﻿using DigitalWellbeing.Core.Data;
 using DigitalWellbeing.ViewModels;
 using System.Windows;
 
