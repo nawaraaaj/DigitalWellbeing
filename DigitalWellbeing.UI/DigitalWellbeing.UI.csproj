@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DigitalWellbeing.core\DigitalWellbeing.Core.csproj" />
-    <ProjectReference Include="..\DigitalWellbeing.Tracker\DigitalWellbeing.Tracker.csproj" />
   </ItemGroup>
 
 </Project>

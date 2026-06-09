@@ -60,6 +60,7 @@ namespace DigitalWellbeing.Core.Services
                 insertCmd.ExecuteNonQuery();
             }
         }
+        
 
         //get all app usage records for today
         public List<AppUsage> GetTodayUsage()
@@ -93,5 +94,37 @@ namespace DigitalWellbeing.Core.Services
             }
             return list;
         }
+
+        //
+        public List<AppUsage> GetUsageByDate(DateTime date)
+{
+    var list = new List<AppUsage>();
+    using var connection = new SqliteConnection($"Data Source={dbPath}");
+    connection.Open();
+
+    string dateStr = date.ToString("yyyy-MM-dd");
+
+    string sql = @"SELECT AppName,
+                    SUM(TimeUsedSeconds) AS TotalSeconds
+                    FROM AppUsage WHERE
+                    UsageDate = @date
+                    GROUP BY AppName
+                    ORDER BY TotalSeconds DESC;";
+
+    using var cmd = new SqliteCommand(sql, connection);
+    cmd.Parameters.AddWithValue("@date", dateStr);
+
+    using var reader = cmd.ExecuteReader();
+    while (reader.Read())
+    {
+        list.Add(new AppUsage
+        {
+            AppName = reader.GetString(0),
+            TimeUsedSeconds = reader.GetInt32(1),
+            UsageDate = date
+        });
+    }
+    return list;
+}
     }
 }

@@ -13,13 +13,31 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
+        <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="Digital Wellbeing"
-                       FontSize="26"
-                       FontWeight="Bold"/>
-            <TextBlock Text="{Binding TodayDate}"
-                       FontSize="14"
-                       Foreground="Gray"/>
+               FontSize="26"
+               FontWeight="Bold"/>
+
+            <!-- Date navigation -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
+                <Button Content="&#8592;"
+                Command="{Binding GoBackCommand}"
+                Width="30" Height="30"
+                FontSize="16"/>
+
+                <TextBlock Text="{Binding SelectedDateLabel}"
+                   FontSize="14"
+                   Foreground="Gray"
+                   VerticalAlignment="Center"
+                   Margin="12,0"
+                   MinWidth="180"/>
+
+                <Button Content="&#8594;"
+                Command="{Binding GoForwardCommand}"
+                Width="30" Height="30"
+                FontSize="16"/>
+            </StackPanel>
         </StackPanel>
 
         <!-- Total Screen Time -->

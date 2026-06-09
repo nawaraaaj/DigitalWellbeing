@@ -11,8 +11,6 @@ namespace DigitalWellbeing
         {
             InitializeComponent();
 
-            DatabaseInitializer.Initialize();
-
             DataContext = new DashboardViewModel();
         }
     }
