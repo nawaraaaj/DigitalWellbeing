@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="Digital Wellbeing"
         Height="600"
-        Width="900">
+        Width="600">
 
     <Grid>
         <Grid.ColumnDefinitions>

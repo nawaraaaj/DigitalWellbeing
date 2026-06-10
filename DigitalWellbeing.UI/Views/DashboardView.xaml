@@ -12,60 +12,177 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+        <!-- Header + Chart -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
             <TextBlock Text="Digital Wellbeing"
-               FontSize="26"
-               FontWeight="Bold"/>
+               FontSize="24"
+               FontWeight="Bold"
+               Margin="0,0,0,2"/>
+            <TextBlock Text="{Binding SelectedDateLabel}"
+               FontSize="13"
+               Foreground="Gray"
+               Margin="0,0,0,12"/>
 
-            <!-- Date navigation -->
-            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
-                <Button Content="&#8592;"
-                Command="{Binding GoBackCommand}"
-                Width="30" Height="30"
-                FontSize="16"/>
+            <Border Background="#F8F8F8"
+            CornerRadius="10"
+            Padding="10,10,10,6"
+            BorderBrush="#E0E0E0"
+            BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                <TextBlock Text="{Binding SelectedDateLabel}"
-                   FontSize="14"
-                   Foreground="Gray"
-                   VerticalAlignment="Center"
-                   Margin="12,0"
-                   MinWidth="180"/>
+                    <!-- Chart area -->
+                    <Grid Grid.Row="0" Height="80" Margin="28,0,4,0">
 
-                <Button Content="&#8594;"
-                Command="{Binding GoForwardCommand}"
-                Width="30" Height="30"
-                FontSize="16"/>
-            </StackPanel>
+                        <!-- Gridlines -->
+                        <Canvas>
+                            <Line X1="0" Y1="79" X2="10000" Y2="79"
+                          Stroke="#DDDDDD" StrokeThickness="1"/>
+                            <Line X1="0" Y1="52" X2="10000" Y2="52"
+                          Stroke="#EEEEEE" StrokeThickness="0.5"
+                          StrokeDashArray="4,3"/>
+                            <Line X1="0" Y1="26" X2="10000" Y2="26"
+                          Stroke="#EEEEEE" StrokeThickness="0.5"
+                          StrokeDashArray="4,3"/>
+                            <Line X1="0" Y1="0" X2="10000" Y2="0"
+                          Stroke="#EEEEEE" StrokeThickness="0.5"
+                          StrokeDashArray="4,3"/>
+                        </Canvas>
+
+                        <!-- Hour labels -->
+                        <Canvas>
+                            <TextBlock Canvas.Left="-28" Canvas.Top="-7"
+                               Text="{Binding HourLabel3}"
+                               FontSize="9" Foreground="#AAAAAA"/>
+                            <TextBlock Canvas.Left="-28" Canvas.Top="19"
+                               Text="{Binding HourLabel2}"
+                               FontSize="9" Foreground="#AAAAAA"/>
+                            <TextBlock Canvas.Left="-28" Canvas.Top="45"
+                               Text="{Binding HourLabel1}"
+                               FontSize="9" Foreground="#AAAAAA"/>
+                            <TextBlock Canvas.Left="-28" Canvas.Top="72"
+                               Text="0"
+                               FontSize="9" Foreground="#AAAAAA"/>
+                        </Canvas>
+
+                        <!-- Bars -->
+                        <ItemsControl ItemsSource="{Binding WeekBars}"
+                              VerticalAlignment="Bottom"
+                              HorizontalAlignment="Stretch">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"
+                                        HorizontalAlignment="Stretch"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding SelectCommand}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    Width="40"
+                                    Cursor="Hand"
+                                    VerticalAlignment="Bottom"
+                                    ToolTip="{Binding ToolTipLabel}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <ContentPresenter/>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                        <Border Height="{Binding BarHeight}"
+                                        Width="22"
+                                        CornerRadius="3,3,0,0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Bottom">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#CECBF6"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="Background" Value="#534AB7"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding HasNoData}" Value="True">
+                                                            <Setter Property="Background" Value="#E8E8E8"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                        </Border>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+
+                    <!-- Day labels -->
+                    <ItemsControl Grid.Row="1"
+                          ItemsSource="{Binding WeekBars}"
+                          Margin="28,3,4,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding DayLabel}"
+                                   Width="40"
+                                   TextAlignment="Center"
+                                   FontSize="10">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#AAAAAA"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Foreground" Value="#534AB7"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                </Grid>
+            </Border>
         </StackPanel>
 
         <!-- Total Screen Time -->
         <Border Grid.Row="1"
                 Background="#F3F3F3"
                 CornerRadius="8"
-                Padding="20"
-                Margin="0,0,0,20">
+                Padding="16,12"
+                Margin="0,0,0,12">
             <StackPanel>
-                <TextBlock Text="Total Time Today"
-                           FontSize="16"
+                <TextBlock Text="Total Time"
+                           FontSize="13"
                            Foreground="Gray"/>
                 <TextBlock Text="{Binding TotalTimeToday}"
-                           FontSize="32"
+                           FontSize="28"
                            FontWeight="Bold"/>
             </StackPanel>
         </Border>
 
         <!-- App Usage List -->
-        <GroupBox Grid.Row="2" Header="App Usage Today">
+        <GroupBox Grid.Row="2" Header="App Usage">
             <ListView ItemsSource="{Binding TodayAppUsages}">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Application"
                                         Width="200"
                                         DisplayMemberBinding="{Binding AppName}"/>
-
-                        <GridViewColumn Header="Time Used (HH:MM)"
+                        <GridViewColumn Header="Time Used"
                                         Width="150"
                                         DisplayMemberBinding="{Binding FormattedTime}"/>
                     </GridView>
