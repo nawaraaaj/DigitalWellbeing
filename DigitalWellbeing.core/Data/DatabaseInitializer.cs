@@ -38,22 +38,10 @@ namespace DigitalWellbeing.Core.Data
                     TimeUsedSeconds INTEGER NOT NULL
                 );";
 
-            var createDailySummaryTable = @"
-                CREATE TABLE IF NOT EXISTS DailySummary (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    UsageDate TEXT NOT NULL UNIQUE,
-                    TotalTimeSeconds INTEGER NOT NULL,
-                     AppUsageBreakdown TEXT
-                );";
-
             using var cmd = connection.CreateCommand();
 
             cmd.CommandText = createAppUsageTable;
             cmd.ExecuteNonQuery();
-
-            cmd.CommandText = createDailySummaryTable;
-            cmd.ExecuteNonQuery();
-
         }
     }
 }

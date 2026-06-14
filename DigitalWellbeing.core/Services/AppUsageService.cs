@@ -8,12 +8,10 @@ namespace DigitalWellbeing.Core.Services
     public class AppUsageService
     {
         private readonly string dbPath;
-        private readonly DailySummaryService _dailySummaryService;
 
         public AppUsageService()
         {
             dbPath = DatabaseInitializer.GetDatabasePath();
-            _dailySummaryService = new DailySummaryService();
         }
 
         //new app usage record

@@ -7,7 +7,6 @@ namespace DigitalWellbeing.Tracker
     {
         private readonly System.Timers.Timer _timer;
         private readonly AppUsageService _appusageService;
-        private readonly DailySummaryService _dailySummaryService;
 
         private DateTime _lastSummaryUpdate;
     
@@ -23,7 +22,6 @@ namespace DigitalWellbeing.Tracker
         public AppTracker()
         {
             _appusageService = new AppUsageService();
-            _dailySummaryService = new DailySummaryService();
 
             _timer = new System.Timers.Timer(1000);
             _timer.Elapsed += OnTimerElapsed;
@@ -138,7 +136,6 @@ namespace DigitalWellbeing.Tracker
 
             if ((DateTime.Now - _lastSummaryUpdate).TotalSeconds >= 60)
             {
-                _dailySummaryService.GenerateOrUpdateDailySummary();
                 _lastSummaryUpdate = DateTime.Now;
             }
 
