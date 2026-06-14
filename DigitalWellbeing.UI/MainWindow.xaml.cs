@@ -1,5 +1,4 @@
-﻿using DigitalWellbeing.Core.Data;
-using DigitalWellbeing.ViewModels;
+﻿using DigitalWellbeing.ViewModels;
 using System.Windows;
 
 namespace DigitalWellbeing

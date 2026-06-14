@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace DigitalWellbeing.Core.Models
+﻿namespace DigitalWellbeing.Core.Models
 {
     public class AppUsage
     {

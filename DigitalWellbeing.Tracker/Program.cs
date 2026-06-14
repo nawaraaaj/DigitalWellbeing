@@ -1,6 +1,4 @@
 ﻿using DigitalWellbeing.Tracker;
-using System;
-using System.Threading;
 
 class Program
 {
