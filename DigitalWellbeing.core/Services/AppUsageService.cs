@@ -36,6 +36,7 @@ namespace DigitalWellbeing.Core.Services
             {
                 int id = reader.GetInt32(0);
                 int existingSeconds = reader.GetInt32(1);
+                reader.Close();
 
                 string updateSql = @"UPDATE AppUsage SET 
                                     TimeUsedSeconds = @total
@@ -48,6 +49,7 @@ namespace DigitalWellbeing.Core.Services
             }
             else
             {
+                reader.Close();
                 string insertSql = @"INSERT INTO AppUsage (AppName, UsageDate, TimeUsedSeconds)
                     Values(@app, @date, @time);";
 

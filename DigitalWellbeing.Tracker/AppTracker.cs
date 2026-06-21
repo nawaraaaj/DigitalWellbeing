@@ -15,7 +15,7 @@ namespace DigitalWellbeing.Tracker
         private DateTime _lastTrackedDate;
         
 
-        private int _accumulatedSeconds;
+        private double _accumulatedSeconds;
         private bool _isTracking;
         private bool _isTickRunning;
 
@@ -31,6 +31,7 @@ namespace DigitalWellbeing.Tracker
             _lastTrackedDate = DateTime.Today;
             _accumulatedSeconds = 0;
             _lastSummaryUpdate = DateTime.Now;
+           
         }
 
         public void StartTracking()
@@ -60,11 +61,12 @@ namespace DigitalWellbeing.Tracker
 
         public void PauseTracking()
         {
-            if (!_isTracking)
+            if (_isTracking)
                 return;
 
             _timer.Stop();
             AccumulateTime();
+            _isTracking = true;
             SaveCurrentAppUsage();
         }
 
@@ -117,9 +119,9 @@ namespace DigitalWellbeing.Tracker
 
         private void AccumulateTime()
         {
-            int seconds = (int)(DateTime.Now - _lastSwitchTime).TotalSeconds;
+            double seconds = (DateTime.Now - _lastSwitchTime).TotalSeconds;
 
-            if (seconds > 0)
+            if (seconds > 0.01)
                 _accumulatedSeconds += seconds;
 
             _lastSwitchTime = DateTime.Now;
@@ -129,10 +131,12 @@ namespace DigitalWellbeing.Tracker
             if (string.IsNullOrWhiteSpace(_currentAppName))
                 return;
 
-            if (_accumulatedSeconds <= 0)
+            if (_accumulatedSeconds < 1)
                 return;
 
-            _appusageService.AddAppUsage(_currentAppName, _accumulatedSeconds);
+            int roundedSeconds = (int)Math.Round(_accumulatedSeconds);
+
+            _appusageService.AddAppUsage(_currentAppName, roundedSeconds);
 
             if ((DateTime.Now - _lastSummaryUpdate).TotalSeconds >= 60)
             {
@@ -152,6 +156,7 @@ namespace DigitalWellbeing.Tracker
 
             _lastTrackedDate = DateTime.Today;
             _lastSwitchTime = DateTime.Now;
+            _accumulatedSeconds = 0;
         }
     }
 }
