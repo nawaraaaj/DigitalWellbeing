@@ -1,4 +1,5 @@
 ﻿using DigitalWellbeing.Tracker;
+using DigitalWellbeing.Core.Data;
 
 class Program
 {
@@ -9,6 +10,8 @@ class Program
         _mutex = new Mutex(true, "DigitalWellbeing.Tracker", out bool isNewInstance);
         if (!isNewInstance)
             return;
+
+        DatabaseInitializer.Initialize();
 
         //starts on boot
         StartupManager.EnsureStartup();

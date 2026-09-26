@@ -1,4 +1,6 @@
 ﻿using DigitalWellbeing.Core.Services;
+using Microsoft.Win32;
+using System.Diagnostics;
 using System.Timers;
 
 namespace DigitalWellbeing.Tracker
@@ -7,17 +9,17 @@ namespace DigitalWellbeing.Tracker
     {
         private readonly System.Timers.Timer _timer;
         private readonly AppUsageService _appusageService;
+        private readonly object _stateLock = new();
 
-        private DateTime _lastSummaryUpdate;
-    
-        private string _currentAppName;
+        private string _currentAppName = string.Empty;
         private DateTime _lastSwitchTime;
-        private DateTime _lastTrackedDate;
-        
-
+        private DateTime _accumulatedDate;
         private double _accumulatedSeconds;
-        private bool _isTracking;
-        private bool _isTickRunning;
+        private bool _isStarted;
+        private bool _isPaused;
+        private bool _isManuallyPaused;
+        private bool _isSessionLocked;
+        private bool _isSystemSuspended;
 
         public AppTracker()
         {
@@ -26,106 +28,210 @@ namespace DigitalWellbeing.Tracker
             _timer = new System.Timers.Timer(1000);
             _timer.Elapsed += OnTimerElapsed;
 
-            _currentAppName = string.Empty;
-            _lastSwitchTime = DateTime.Now;
-            _lastTrackedDate = DateTime.Today;
-            _accumulatedSeconds = 0;
-            _lastSummaryUpdate = DateTime.Now;
-           
         }
 
         public void StartTracking()
         {
-            if (_isTracking)
-                return;
+            lock (_stateLock)
+            {
+                if (_isStarted)
+                    return;
 
-            _isTracking = true;
-            _currentAppName = Win32Api.GetActiveApplicationName() ?? string.Empty;
-            _lastSwitchTime = DateTime.Now;
-            _lastTrackedDate = DateTime.Today;
-            _accumulatedSeconds = 0;
+                _isStarted = true;
+                SystemEvents.SessionSwitch += OnSessionSwitch;
+                SystemEvents.PowerModeChanged += OnPowerModeChanged;
+                _isSessionLocked = !Win32Api.IsInputDesktopAvailable();
 
-            _timer.Start();
+                DateTime now = DateTime.Now;
+                _lastSwitchTime = now;
+                _accumulatedDate = now.Date;
+                _currentAppName = Win32Api.GetActiveApplicationName() ?? string.Empty;
+                _isPaused = _isSessionLocked;
+
+                if (!_isPaused)
+                    _timer.Start();
+            }
         }
 
         public void StopTracking()
         {
-            if (!_isTracking)
-                return;
+            lock (_stateLock)
+            {
+                if (!_isStarted)
+                    return;
 
-            _timer.Stop();
-            AccumulateTime();
-            SaveCurrentAppUsage();
-            _isTracking = false;
+                _timer.Stop();
+                if (!_isPaused)
+                {
+                    AccumulateTime(DateTime.Now);
+                    SaveCurrentAppUsage();
+                }
+
+                SystemEvents.SessionSwitch -= OnSessionSwitch;
+                SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+                _isStarted = false;
+                _currentAppName = string.Empty;
+            }
         }
 
         public void PauseTracking()
         {
-            if (_isTracking)
-                return;
+            lock (_stateLock)
+            {
+                if (!_isStarted || _isManuallyPaused)
+                    return;
 
-            _timer.Stop();
-            AccumulateTime();
-            _isTracking = true;
-            SaveCurrentAppUsage();
+                _isManuallyPaused = true;
+                try
+                {
+                    UpdatePausedState(DateTime.Now);
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("Session switch handling failed: {0}", ex);
+                }
+            }
         }
 
         public void ResumeTracking()
         {
-            if (!_isTracking)
+            lock (_stateLock)
+            {
+                if (!_isStarted || !_isManuallyPaused)
+                    return;
+
+                _isManuallyPaused = false;
+                try
+                {
+                    UpdatePausedState(DateTime.Now);
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("Power mode handling failed: {0}", ex);
+                }
+            }
+        }
+
+        private void OnSessionSwitch(object sender, SessionSwitchEventArgs e)
+        {
+            lock (_stateLock)
+            {
+                if (!_isStarted)
+                    return;
+
+                if (e.Reason == SessionSwitchReason.SessionLock)
+                    _isSessionLocked = true;
+                else if (e.Reason == SessionSwitchReason.SessionUnlock)
+                    _isSessionLocked = false;
+                else
+                    return;
+
+                UpdatePausedState(DateTime.Now);
+            }
+        }
+
+        private void OnPowerModeChanged(object? sender, PowerModeChangedEventArgs e)
+        {
+            lock (_stateLock)
+            {
+                if (!_isStarted)
+                    return;
+
+                if (e.Mode == PowerModes.Suspend)
+                    _isSystemSuspended = true;
+                else if (e.Mode == PowerModes.Resume)
+                    _isSystemSuspended = false;
+                else
+                    return;
+
+                UpdatePausedState(DateTime.Now);
+            }
+        }
+
+        private void UpdatePausedState(DateTime now)
+        {
+            bool shouldPause = _isManuallyPaused || _isSessionLocked || _isSystemSuspended;
+            if (shouldPause == _isPaused)
                 return;
 
+            if (shouldPause)
+            {
+                _isPaused = true;
+                _timer.Stop();
+                AccumulateTime(now);
+                SaveCurrentAppUsage();
+                return;
+            }
+
+            SaveCurrentAppUsage();
             _currentAppName = Win32Api.GetActiveApplicationName() ?? string.Empty;
-            _lastSwitchTime = DateTime.Now;
+            _lastSwitchTime = now;
+            _accumulatedDate = now.Date;
+            _isPaused = false;
             _timer.Start();
         }
 
         private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
         {
-            if (_isTickRunning)
+            lock (_stateLock)
+            {
+                if (!_isStarted || _isPaused)
+                    return;
+
+                try
+                {
+                    DateTime now = DateTime.Now;
+                    string activeApp = Win32Api.GetActiveApplicationName() ?? string.Empty;
+                    AccumulateTime(now);
+
+                    if (!activeApp.Equals(_currentAppName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        SaveCurrentAppUsage();
+                        _currentAppName = activeApp;
+                        _lastSwitchTime = now;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("App usage tracking tick failed: {0}", ex);
+                }
+            }
+        }
+
+        private void AccumulateTime(DateTime now)
+        {
+            if (now <= _lastSwitchTime)
                 return;
 
-            _isTickRunning = true;
-
-            try
+            DateTime intervalStart = _lastSwitchTime;
+            while (intervalStart < now)
             {
-                HandleDateChange();
+                DateTime segmentDate = intervalStart.Date;
+                DateTime segmentEnd = now < segmentDate.AddDays(1) ? now : segmentDate.AddDays(1);
 
-                string activeApp = Win32Api.GetActiveApplicationName() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(activeApp))
-                    return;
-
-                if (_currentAppName == string.Empty)
+                if (_accumulatedDate != segmentDate)
                 {
-                    _currentAppName = activeApp;
-                    _lastSwitchTime = DateTime.Now;
-                    return;
-                }
-
-                if (!activeApp.Equals(_currentAppName, StringComparison.OrdinalIgnoreCase))
-                {
-                    AccumulateTime();
                     SaveCurrentAppUsage();
+                    _accumulatedDate = segmentDate;
+                    _accumulatedSeconds = 0;
+                }
 
-                    _currentAppName = activeApp;
-                    _lastSwitchTime = DateTime.Now;
+                if (!string.IsNullOrWhiteSpace(_currentAppName))
+                    _accumulatedSeconds += (segmentEnd - intervalStart).TotalSeconds;
+
+                intervalStart = segmentEnd;
+                _lastSwitchTime = intervalStart;
+                if (intervalStart.Date != segmentDate)
+                {
+                    SaveCurrentAppUsage();
+                    _accumulatedDate = intervalStart.Date;
+                    _accumulatedSeconds = 0;
                 }
             }
-            finally
-            {
-                _isTickRunning = false;
-            }
+
+            _lastSwitchTime = now;
         }
 
-        private void AccumulateTime()
-        {
-            double seconds = (DateTime.Now - _lastSwitchTime).TotalSeconds;
-
-            if (seconds > 0.01)
-                _accumulatedSeconds += seconds;
-
-            _lastSwitchTime = DateTime.Now;
-        }
         private void SaveCurrentAppUsage()
         {
             if (string.IsNullOrWhiteSpace(_currentAppName))
@@ -136,26 +242,7 @@ namespace DigitalWellbeing.Tracker
 
             int roundedSeconds = (int)Math.Round(_accumulatedSeconds);
 
-            _appusageService.AddAppUsage(_currentAppName, roundedSeconds);
-
-            if ((DateTime.Now - _lastSummaryUpdate).TotalSeconds >= 60)
-            {
-                _lastSummaryUpdate = DateTime.Now;
-            }
-
-            _accumulatedSeconds = 0;
-        }
-
-        private void HandleDateChange()
-        {
-            if (DateTime.Today == _lastTrackedDate)
-                return;
-
-            AccumulateTime();
-            SaveCurrentAppUsage();
-
-            _lastTrackedDate = DateTime.Today;
-            _lastSwitchTime = DateTime.Now;
+            _appusageService.AddAppUsage(_currentAppName, roundedSeconds, _accumulatedDate);
             _accumulatedSeconds = 0;
         }
     }

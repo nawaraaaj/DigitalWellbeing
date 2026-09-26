@@ -17,10 +17,15 @@ namespace DigitalWellbeing.Core.Services
         //new app usage record
         public void AddAppUsage(string appName, int timeUsedSeconds)
         {
+            AddAppUsage(appName, timeUsedSeconds, DateTime.Today);
+        }
+
+        public void AddAppUsage(string appName, int timeUsedSeconds, DateTime usageDate)
+        {
             using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
 
-            string today = DateTime.Today.ToString("yyyy-MM-dd");
+            string date = usageDate.ToString("yyyy-MM-dd");
 
             string checkSql = @"SELECT Id, TimeUsedSeconds
                                 FROM AppUsage
@@ -28,7 +33,7 @@ namespace DigitalWellbeing.Core.Services
 
             using var checkCmd = new SqliteCommand(checkSql, connection);
             checkCmd.Parameters.AddWithValue("@app", appName);
-            checkCmd.Parameters.AddWithValue("@date", today);
+            checkCmd.Parameters.AddWithValue("@date", date);
 
             using var reader = checkCmd.ExecuteReader();
 
@@ -55,7 +60,7 @@ namespace DigitalWellbeing.Core.Services
 
                 using var insertCmd = new SqliteCommand(insertSql, connection);
                 insertCmd.Parameters.AddWithValue("@app", appName);
-                insertCmd.Parameters.AddWithValue("@date", today);
+                insertCmd.Parameters.AddWithValue("@date", date);
                 insertCmd.Parameters.AddWithValue("@time", timeUsedSeconds);
                 insertCmd.ExecuteNonQuery();
             }
